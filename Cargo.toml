@@ -1,0 +1,31 @@
+[package]
+name = "mouse-codes"
+version = "0.1.0"
+edition = "2021"
+description = "Cross-platform mouse button code mapping and conversion"
+authors = ["YeMiancheng <ymc.github@gmail.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/ymc-github/mouse-codes"
+readme = "README.md"
+keywords = ["mouse", "button", "input", "cross-platform"]
+categories = ["hardware-support", "api-bindings"]
+documentation = "https://docs.rs/mouse_codes"
+
+[dependencies]
+thiserror = "1.0"
+serde = { version = "1.0", optional = true, features = ["derive"] }
+phf = { version = "0.11", optional = true }
+lazy_static = "1.4"
+
+[features]
+default = []
+serde = ["dep:serde"]
+phf = ["dep:phf", "dep:lazy_static"]
+extended = []
+
+[dev-dependencies]
+serde = { version = "1.0", features = ["derive"] }
+
+[[example]]
+name = "basic_usage"
+path = "examples/basic_usage.rs"
