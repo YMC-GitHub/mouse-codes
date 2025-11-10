@@ -27,7 +27,26 @@ extended = []
 
 [dev-dependencies]
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+clap = { version = "4.0", features = ["derive"] }
+
 
 [[example]]
 name = "basic_usage"
 path = "examples/basic_usage.rs"
+
+[[example]]
+name = "game_input" 
+path = "examples/game_input.rs"
+
+[[example]]
+name = "automated_testing"
+path = "examples/automated_testing.rs"
+
+[[example]]
+name = "cross_platform_app"
+path = "examples/cross_platform_app.rs"
+
+[[example]]
+name = "config_system"
+path = "examples/config_system.rs"

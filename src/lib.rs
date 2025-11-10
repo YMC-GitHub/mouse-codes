@@ -37,21 +37,13 @@ pub use mapping::standard::parse_button_ignore_case;
 // Re-export advanced parser functionality
 pub use parser::{parse_button_with_aliases, parse_mouse_input};
 
-use std::str::FromStr;
-
-// Implement FromStr for Button using the standard mappings
-impl FromStr for Button {
-    type Err = MouseParseError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        mapping::standard::parse_button_from_str(s)
-    }
-}
-
-// #[deprecated(since = "0.1.0", note = "Use Platform::current() instead")]
+// 保持向后兼容性，但标记为已弃用
+#[deprecated(since = "0.1.0", note = "Use Platform::current() instead")]
 /// Get the current platform based on compilation target
 ///
 /// This function is deprecated. Use `Platform::current()` instead.
 pub fn current_platform() -> Platform {
     Platform::current()
 }
+
+// 注意：移除了在 lib.rs 中的重复实现，所有方法实现都在各自的类型模块中

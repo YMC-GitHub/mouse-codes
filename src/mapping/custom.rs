@@ -98,10 +98,11 @@ impl CustomButtonMap {
     }
 }
 
+// 明确使用 CodeMapper trait 的方法
 impl CodeMapper for CustomButton {
     fn to_code(&self, platform: Platform) -> usize {
         match self {
-            CustomButton::Standard(btn) => btn.to_code(platform),
+            CustomButton::Standard(btn) => <Button as CodeMapper>::to_code(btn, platform),
             CustomButton::Custom(_) => {
                 panic!("Custom buttons require a CustomButtonMap for conversion")
             }
@@ -109,7 +110,7 @@ impl CodeMapper for CustomButton {
     }
 
     fn from_code(code: usize, platform: Platform) -> Option<Self> {
-        Button::from_code(code, platform).map(CustomButton::Standard)
+        <Button as CodeMapper>::from_code(code, platform).map(CustomButton::Standard)
     }
 }
 
@@ -117,7 +118,7 @@ impl CustomButtonMap {
     /// Get the platform-specific code for a custom button
     pub fn get_code_for_button(&self, button: &CustomButton, platform: Platform) -> Option<usize> {
         match button {
-            CustomButton::Standard(btn) => Some(btn.to_code(platform)),
+            CustomButton::Standard(btn) => Some(<Button as CodeMapper>::to_code(btn, platform)),
             CustomButton::Custom(_) => {
                 let idx = match platform {
                     Platform::Windows => 0,
@@ -138,9 +139,8 @@ impl CustomButtonMap {
         };
 
         // Check custom mappings first, then fall back to standard buttons
-        self.reverse_mappings[idx]
-            .get(&code)
-            .cloned()
-            .or_else(|| Button::from_code(code, platform).map(CustomButton::Standard))
+        self.reverse_mappings[idx].get(&code).cloned().or_else(|| {
+            <Button as CodeMapper>::from_code(code, platform).map(CustomButton::Standard)
+        })
     }
 }

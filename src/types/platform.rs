@@ -2,6 +2,8 @@
 
 use std::fmt;
 
+use crate::types::Button;
+
 /// Supported operating systems/platforms
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -28,6 +30,21 @@ impl Platform {
 
         #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
         panic!("Unsupported platform");
+    }
+
+    /// Get code for button on this platform
+    pub fn button_code(&self, button: Button) -> usize {
+        button.to_code(*self)
+    }
+
+    /// Get button from code on this platform  
+    pub fn button_from_code(&self, code: usize) -> Option<Button> {
+        Button::from_code(code, *self)
+    }
+
+    /// Check if the given code matches the specified button on this platform
+    pub fn code_matches_button(&self, code: usize, button: Button) -> bool {
+        button.matches_code(code, *self)
     }
 }
 

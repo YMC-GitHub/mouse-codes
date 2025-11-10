@@ -1,9 +1,14 @@
 use std::fmt;
+use std::str::FromStr;
+
+use crate::error::MouseParseError;
+use crate::mapping::standard::parse_button_from_str;
+use crate::types::{CodeMapper, Platform};
 
 #[cfg(feature = "phf")]
 use phf::PhfHash;
 #[cfg(feature = "phf")]
-use phf_shared::PhfBorrow; // 从 phf_shared 导入 PhfBorrow
+use phf_shared::PhfBorrow;
 
 /// Mouse button enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -39,28 +44,6 @@ pub enum Button {
     Extra10,
 }
 
-#[cfg(feature = "phf")]
-impl PhfHash for Button {
-    fn phf_hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.as_str().phf_hash(state);
-    }
-}
-
-#[cfg(feature = "phf")]
-impl PhfBorrow<Button> for Button {
-    fn borrow(&self) -> &Button {
-        self
-    }
-}
-
-// 为 phf 哈希表查找实现 PhfBorrow<Button> for &Button
-#[cfg(feature = "phf")]
-impl PhfBorrow<Button> for &Button {
-    fn borrow(&self) -> &Button {
-        self
-    }
-}
-
 impl Button {
     /// Get the string representation of the button
     pub fn as_str(&self) -> &'static str {
@@ -81,6 +64,66 @@ impl Button {
             #[cfg(feature = "extended")]
             Button::Extra10 => "Extra10",
         }
+    }
+
+    /// Convert the button to a platform-specific code
+    pub fn to_code(&self, platform: Platform) -> usize {
+        <Self as CodeMapper>::to_code(self, platform)
+    }
+
+    /// Parse a button from a platform-specific code
+    pub fn from_code(code: usize, platform: Platform) -> Option<Self> {
+        <Self as CodeMapper>::from_code(code, platform)
+    }
+
+    /// Get the code for this button on the current platform
+    pub fn to_current_platform_code(&self) -> usize {
+        self.to_code(Platform::current())
+    }
+
+    /// Parse a button from a code on the current platform
+    pub fn from_current_platform_code(code: usize) -> Option<Self> {
+        Self::from_code(code, Platform::current())
+    }
+
+    /// Check if this button matches the given code on the specified platform
+    pub fn matches_code(&self, code: usize, platform: Platform) -> bool {
+        Self::from_code(code, platform) == Some(*self)
+    }
+
+    /// Check if this button matches the given code on the current platform
+    pub fn matches_current_platform_code(&self, code: usize) -> bool {
+        self.matches_code(code, Platform::current())
+    }
+}
+
+impl FromStr for Button {
+    type Err = MouseParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        parse_button_from_str(s)
+    }
+}
+
+#[cfg(feature = "phf")]
+impl PhfHash for Button {
+    fn phf_hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.as_str().phf_hash(state);
+    }
+}
+
+#[cfg(feature = "phf")]
+impl PhfBorrow<Button> for Button {
+    fn borrow(&self) -> &Button {
+        self
+    }
+}
+
+// 为 phf 哈希表查找实现 PhfBorrow<Button> for &Button
+#[cfg(feature = "phf")]
+impl PhfBorrow<Button> for &Button {
+    fn borrow(&self) -> &Button {
+        self
     }
 }
 
