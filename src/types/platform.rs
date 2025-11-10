@@ -14,6 +14,23 @@ pub enum Platform {
     MacOS,
 }
 
+impl Platform {
+    /// Get the current platform based on compilation target
+    pub fn current() -> Self {
+        #[cfg(target_os = "windows")]
+        return Platform::Windows;
+
+        #[cfg(target_os = "linux")]
+        return Platform::Linux;
+
+        #[cfg(target_os = "macos")]
+        return Platform::MacOS;
+
+        #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
+        panic!("Unsupported platform");
+    }
+}
+
 impl fmt::Display for Platform {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

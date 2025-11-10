@@ -1,35 +1,19 @@
 //! mouse-codes: Cross-platform mouse button code mapping and conversion
 //!
 //! This crate provides comprehensive mouse button definitions and cross-platform
-//! code mapping for Windows, Linux, and macOS. It supports standard buttons,
-//! scroll events, custom button mapping, and bidirectional conversion between
-//! button names and platform-specific codes.
-//!
-//! # Examples
-//!
-//! ```rust
-//! use mouse_codes::{Button, Platform, CodeMapper};
-//!
-//! // Parse button from string
-//! let button: Button = "Left".parse().unwrap();
-//! assert_eq!(button, Button::Left);
-//!
-//! // Convert button to platform-specific code
-//! let windows_code = button.to_code(Platform::Windows);
-//! let linux_code = button.to_code(Platform::Linux);
-//!
-//! // Parse button from code
-//! let button_from_code = Button::from_code(1, Platform::Windows).unwrap();
-//! assert_eq!(button_from_code, Button::Left);
-//! ```
-//!
-//! # Features
-//!
-//! - `serde`: Enables serialization/deserialization support
-//! - `phf`: Uses perfect hash functions for faster lookups
+//! code mapping for Windows, Linux, and macOS.
 
 #![deny(missing_docs)]
 #![warn(clippy::all)]
+
+#[cfg(feature = "serde")]
+extern crate serde;
+
+#[cfg(feature = "phf")]
+extern crate phf;
+
+#[cfg(feature = "phf")]
+extern crate lazy_static;
 
 /// Error types for mouse parsing and mapping
 pub mod error;
@@ -48,12 +32,10 @@ pub use mapping::custom::{CustomButton, CustomButtonMap};
 pub use types::{Button, CodeMapper, MouseEvent, Platform, ScrollDirection};
 
 // Re-export core parsing functions
-pub use mapping::standard::{parse_button_ignore_case};
+pub use mapping::standard::parse_button_ignore_case;
 
 // Re-export advanced parser functionality
-pub use parser::{
-    parse_button_with_aliases, parse_mouse_input,
-};
+pub use parser::{parse_button_with_aliases, parse_mouse_input};
 
 use std::str::FromStr;
 
@@ -66,17 +48,10 @@ impl FromStr for Button {
     }
 }
 
+// #[deprecated(since = "0.1.0", note = "Use Platform::current() instead")]
 /// Get the current platform based on compilation target
+///
+/// This function is deprecated. Use `Platform::current()` instead.
 pub fn current_platform() -> Platform {
-    #[cfg(target_os = "windows")]
-    return Platform::Windows;
-
-    #[cfg(target_os = "linux")]
-    return Platform::Linux;
-
-    #[cfg(target_os = "macos")]
-    return Platform::MacOS;
-
-    #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
-    panic!("Unsupported platform");
+    Platform::current()
 }

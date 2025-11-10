@@ -1,6 +1,8 @@
 //! Custom mouse button mapping support
 
+use std::borrow::Cow;
 use std::collections::HashMap;
+use std::fmt;
 
 use crate::{
     error::MouseParseError,
@@ -8,13 +10,25 @@ use crate::{
 };
 
 /// A custom mouse button that extends the standard button set
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CustomButton {
     /// A standard mouse button
     Standard(Button),
     /// A custom-defined mouse button with a name
-    Custom(&'static str),
+    Custom(Cow<'static, str>),
+}
+
+impl CustomButton {
+    /// Create a custom button from a static string
+    pub fn custom_static(name: &'static str) -> Self {
+        CustomButton::Custom(Cow::Borrowed(name))
+    }
+
+    /// Create a custom button from a string
+    pub fn custom_string(name: String) -> Self {
+        CustomButton::Custom(Cow::Owned(name))
+    }
 }
 
 impl fmt::Display for CustomButton {
@@ -41,11 +55,7 @@ impl CustomButtonMap {
         Self {
             name: name.to_string(),
             mappings: HashMap::new(),
-            reverse_mappings: [
-                HashMap::new(),
-                HashMap::new(),
-                HashMap::new(),
-            ],
+            reverse_mappings: [HashMap::new(), HashMap::new(), HashMap::new()],
         }
     }
 
@@ -61,18 +71,22 @@ impl CustomButtonMap {
             return Err(MouseParseError::DuplicateCustomButton(button.to_string()));
         }
 
+        // 先克隆按钮用于反向映射
+        let button_clone = button.clone();
+
         // Store forward mapping
-        self.mappings.insert(button, [windows_code, linux_code, macos_code]);
+        self.mappings
+            .insert(button, [windows_code, linux_code, macos_code]);
 
         // Store reverse mappings for each platform
         if let Some(code) = windows_code {
-            self.reverse_mappings[0].insert(code, button);
+            self.reverse_mappings[0].insert(code, button_clone.clone());
         }
         if let Some(code) = linux_code {
-            self.reverse_mappings[1].insert(code, button);
+            self.reverse_mappings[1].insert(code, button_clone.clone());
         }
         if let Some(code) = macos_code {
-            self.reverse_mappings[2].insert(code, button);
+            self.reverse_mappings[2].insert(code, button_clone);
         }
 
         Ok(())
@@ -88,30 +102,14 @@ impl CodeMapper for CustomButton {
     fn to_code(&self, platform: Platform) -> usize {
         match self {
             CustomButton::Standard(btn) => btn.to_code(platform),
-            CustomButton::Custom(_) => panic!("Custom buttons require a CustomButtonMap for conversion"),
+            CustomButton::Custom(_) => {
+                panic!("Custom buttons require a CustomButtonMap for conversion")
+            }
         }
     }
 
     fn from_code(code: usize, platform: Platform) -> Option<Self> {
         Button::from_code(code, platform).map(CustomButton::Standard)
-    }
-}
-
-impl CodeMapper for CustomButtonMap {
-    fn to_code(&self, platform: Platform) -> usize {
-        panic!("Use CustomButtonMap::get_code_for_button instead");
-    }
-
-    fn from_code(&self, code: usize, platform: Platform) -> Option<CustomButton> {
-        let idx = match platform {
-            Platform::Windows => 0,
-            Platform::Linux => 1,
-            Platform::MacOS => 2,
-        };
-
-        // Check custom mappings first, then fall back to standard buttons
-        self.reverse_mappings[idx].get(&code).copied()
-            .or_else(|| Button::from_code(code, platform).map(CustomButton::Standard))
     }
 }
 
@@ -129,5 +127,20 @@ impl CustomButtonMap {
                 self.mappings.get(button).and_then(|codes| codes[idx])
             }
         }
+    }
+
+    /// Get button from platform-specific code using custom mappings
+    pub fn from_code(&self, code: usize, platform: Platform) -> Option<CustomButton> {
+        let idx = match platform {
+            Platform::Windows => 0,
+            Platform::Linux => 1,
+            Platform::MacOS => 2,
+        };
+
+        // Check custom mappings first, then fall back to standard buttons
+        self.reverse_mappings[idx]
+            .get(&code)
+            .cloned()
+            .or_else(|| Button::from_code(code, platform).map(CustomButton::Standard))
     }
 }

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use super::{Button, ScrollDirection};
+use super::Button;
 
 /// Mouse event type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

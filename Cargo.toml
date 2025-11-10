@@ -14,13 +14,15 @@ documentation = "https://docs.rs/mouse_codes"
 [dependencies]
 thiserror = "1.0"
 serde = { version = "1.0", optional = true, features = ["derive"] }
-phf = { version = "0.11", optional = true }
-lazy_static = "1.4"
+phf = { version = "0.11", optional = true, features = ["macros"] }  # 添加 macros 特性
+phf_shared = { version = "0.11", optional = true }
+lazy_static = { version = "1.4", optional = true }
+
 
 [features]
 default = []
 serde = ["dep:serde"]
-phf = ["dep:phf", "dep:lazy_static"]
+phf = ["dep:phf", "dep:phf_shared", "dep:lazy_static"]  # 添加 phf_shared 依赖
 extended = []
 
 [dev-dependencies]
